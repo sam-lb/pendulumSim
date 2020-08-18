@@ -6,5 +6,5 @@ The latest released version is available live in the browser on [plotter.sambrun
 The simulation supports arbitrary amplitude single and double pendulums.
 
 Screenshots:
-[Single pendulum](single_pendulum.png)
-[Double pendulum](double_pendulum.png)
+![Single pendulum](single_pendulum.png)
+![Double pendulum](double_pendulum.png)
