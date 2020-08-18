@@ -509,17 +509,18 @@ class Plot {
 
 /*
 Plot2D
-	- projection mode: rectangular/polar
-	- origin position: (%x, %y) from topleft
+	- projection mode: rectangular/polar (done)
+	- origin position: (%x, %y) from topleft (done)
 	- draggableOrigin=true
-	- setBounds override
+	- setBounds override (done)
 	- primitive drawing override
-	- x axis color, y axis color
+	- x axis color, y axis color (done)
 	- coordinate transformation override
 	- drawAxes override (including labels for axes and the entire plot)
-	- method: scaleToFitAllData()
-	- method: scaleXToFitAllData()
-	- method: scaleYToFitAllData()
+	- method: scaleToFitAllData() (done)
+	- method: scaleXToFitAllData() (done)
+	- method: scaleYToFitAllData() (done)
+	- method: resizeToFitCurve(single curve) (done)
 	- method: updateState NOT update. look at the Plot class when making this one
 */
 
@@ -564,6 +565,7 @@ class Plot2D extends Plot {
 		xScaling="linear", yScaling="linear", xLogBase=null, yLogBase=null, projectionMode="rectangular") {
 
 		super(titleLabel, titleLabelColor, titleLabelSize, backgroundColor);
+		this.curveArray = [];
 		this.setDraggableOrigin(draggableOrigin);
 		this.setXAxisColor(xAxisColor);
 		this.setYAxisColor(yAxisColor);
@@ -697,6 +699,18 @@ class Plot2D extends Plot {
 		return this.config.general.projectionMode;
 	}
 
+	getXScale() {
+		return this.config.general.xScale;
+	}
+
+	getYScale() {
+		return this.config.general.yScale;
+	}
+
+	getCurveArray() {
+		return this.curveArray();
+	}
+
 	onDimensionSet() {
 		this.hasDimensionsSet = true;
 		this.setOrigin(this.originX, this.originY);
@@ -727,7 +741,8 @@ class Plot2D extends Plot {
 		this.config.general.yUnits = yMax - yMin;
 
 		if (this.hasDimensionsSet) {
-			// calculate scaling. account for origin
+			this.config.general.xScale = this.getPixelWidth() / this.getXUnits();
+			this.config.general.yScale = this.getPixelHeight() / this.getYUnits();
 		}
 
 		this.needsUpdate = true;
@@ -805,6 +820,94 @@ class Plot2D extends Plot {
 		}
 	}
 
+	/*
+	Add a Curve object (or subclass) to the CurveArray
+	@param {Curve} curve: the Curve to be added
+	@returns {Curve}: the same curve that was passed in
+	*/
+	addCurve(curve) {
+		if (curve instanceof Curve) {
+			this.curves.push(curve);
+			this.needsUpdate = true;
+			return curve;
+		}
+		throw new Error("curve must be an instance of Curve or subclass.");
+	}
+
+	/* Transform a point in 2D rectangular or polar space to canvas space */
+	coordinateTransform(point) {
+		let x, y;
+
+		if (this.getProjectionMode() === "rectangular") {
+			x = point.x;
+			y = point.y;
+		} else {
+			x = point.x * cos(point.y);
+			y = point.x * sin(point.y);
+		}
+
+		return createVector(
+			this.getOriginX() + x * this.getXScale(),
+			this.getOriginY() - (y * this.getYScale()),
+		);
+	}
+
+	/* Resize the x bounds of the Plot to fit all data */
+	scaleXToFitAllData() {
+		if (this.curveArray.length !== 0) {
+			let xMin = Infinity, xMax = -Infinity, lmin, lmax;
+			for (let curve of this.curveArray) {
+				lmin = curve.getXMin();
+				lmax = curve.getXMax();
+				if (lmin < xMin) xMin = lmin;
+				if (lmax < xMax) xMax = lmax;
+			}
+			if (xMin !== xMax) this.calculateBounds(xMin*1.1, xMax*1.1, this.getYMin(), this.getYMax());
+		}
+	}
+
+	/* Resize the y bounds of the Plot to fit all data */
+	scaleYToFitAllData() {
+		if (this.curveArray.length !== 0) {
+			let yMin = Infinity, yMax = -Infinity, lmin, lmax;
+			for (let curve of this.curveArray) {
+				lmin = curve.getYMin();
+				lmax = curve.getYMax();
+				if (lmin < yMin) yMin = lmin;
+				if (lmax < yMax) yMax = lmax;
+			}
+			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getYMin(), yMin*1.1, yMax*1.1;
+		}
+	}
+
+	/* Resize the Plot bounds to fit all data */
+	scaleToFitAllData() {
+		this.scaleXToFitAllData();
+		this.scaleYToFitAllData();
+	}
+
+	/* Resize the Plot's x bounds to fit a curve */
+	scaleXToFitCurve(curve) {
+		const xMin = curve.getMinX(), xMax = curve.getMaxX();
+		if (xMin !== xMax) {
+			this.calculateBounds(xMin * 1.1, xMax * 1.1, this.getYMin(), this.getYMax());
+		}
+	}
+
+	/* Resize the Plot's y bounds to fit a curve */
+	scaleYToFitCurve(curve) {
+		const yMin = curve.getMinY(), yMax = curve.getMaxY();
+		if (yMin !== yMax) {
+			this.calculateBounds(this.getXMin(), this.getXMax(), yMin * 1.1, yMax * 1.1);
+		}
+	}
+
+	/* Resize the Plot's bounds to fit a curve */
+	scaleToFitCurve(curve) {
+		this.scaleXToFitCurve(curve);
+		this.scaleYToFitCurve(curve);
+	}
+
 }
 
 
@@ -848,6 +951,9 @@ class Curve2D {
 
 	/*
 	curve class
+
+	MUST HAVE:
+	- method: getMinX(), getMaxX(), getMinY(), getMaxY()
 	*/
 	constructor() {
 
