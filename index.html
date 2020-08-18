@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/p5.js"></script>
+	<script src="miniplot.js"></script>
+	<script src="pendulumSim.js"></script>
+    <link rel="stylesheet" type="text/css" href="pendulumSim.css">
+    <meta charset="utf-8" />
+	<title>Pendulum Simulation</title>
+  </head>
+  
+  <body>
+	<div class="main-div">
+		<div id="gui-div">
+			<h4 style="font-weight: normal;">Pendulum Simulation</h4><hr>
+			<div class="interface-section">
+				<button class="sbtn" id="pause-btn" onclick="togglePause();">Pause</button>
+				<button class="sbtn" id="trace-btn" onclick="toggleTrace();">Disable trace</button>
+				<button class="sbtn" id="guides-btn" onclick="toggleGuides();">Disable guides</button>
+				<button class="sbtn" id="mode-btn" onclick="toggleModes();">Switch to double pendulum</button>
+				<button class="sbtn" id="time-reset-btn" onclick="resetSimTime();">Reset timer</button>
+			</div>
+			
+			<div class="interface-section">
+				<div class="widget-container">
+					<p>This simulation assumes g=1000 and every pixel is one meter. Click in the pendulum area to set its angle.</p>
+				</div>
+				
+				<div id="single-pendulum-widgets">
+					<div class="widget-container">
+						<label for="pen1-mass-slider">Mass</label>
+						<input type="range" id="pen1-mass-slider" min="1" max="10" value="1" onchange="pendulum.setMass(parseInt(this.value));"></input><br>
+						<label for="pen1-length-slider">String length</label>
+						<input type="range" id="pen1-length-slider" min="100" max="250" value="220" onchange="pendulum.setCordLength(parseInt(this.value));"></input>
+					</div>
+				</div>
+				
+				<div id="double-pendulum-widgets" style="display:none;">
+					<div class="widget-container">
+						<label for="pen2-mass1-slider">Mass 1</label>
+						<input type="range" id="pen2-mass1-slider" min="1" max="10" value="1" onchange="pendulum.setMass1(parseInt(this.value));"></input><br>
+						<label for="pen2-mass2-slider">Mass 2</label>
+						<input type="range" id="pen2-mass2-slider" min="1" max="10" value="1" onchange="pendulum.setMass2(parseInt(this.value));"></input><br>
+						<label for="pen2-length1-slider">String length 1</label>
+						<input type="range" id="pen2-length1-slider" min="50" max="125" value="110" onchange="pendulum.setCordLength1(parseInt(this.value));"></input><br>
+						<label for="pen2-length2-slider">String length 2</label>
+						<input type="range" id="pen2-length2-slider" min="50" max="125" value="110" onchange="pendulum.setCordLength2(parseInt(this.value));"></input>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="canvas-div"></div>
+	</div>
+  </body>
+  
+</html>
