@@ -389,7 +389,7 @@ class Plot {
 
 	@param {string} titleLabel: the label at the top of the Plot. if null, no title is used.
 	@param {p5 color object} titleLabelColor: The color of the title label
-	@param {int} titleLabelSize: text size of color label
+	@param {int} titleLabelSize: text size of title label
 	@param {p5 color object} backgroundColor: the Plot's background color
 	*/
 
@@ -443,7 +443,13 @@ class Plot {
 		this.setPixelWidth(pixelWidth);
 		this.setPixelHeight(pixelHeight);
 		this.surface = createGraphics(this.getPixelWidth(), this.getPixelHeight());
+		this.onDimensionSet();
 		this.needsUpdate = true;
+	}
+
+	/* to be overridden */
+	onDimensionSet() {
+
 	}
 
 	setTitleLabel(titleLabel, titleLabelColor, titleLabelSize) {
@@ -501,12 +507,303 @@ class Plot {
 
 }
 
+/*
+Plot2D
+	- projection mode: rectangular/polar
+	- origin position: (%x, %y) from topleft
+	- draggableOrigin=true
+	- setBounds override
+	- primitive drawing override
+	- x axis color, y axis color
+	- coordinate transformation override
+	- drawAxes override (including labels for axes and the entire plot)
+	- method: scaleToFitAllData()
+	- method: scaleXToFitAllData()
+	- method: scaleYToFitAllData()
+	- method: updateState NOT update. look at the Plot class when making this one
+*/
 
 class Plot2D extends Plot {
 
 	/*
 	The base class for all types of 2D Plots.
+
+	@param {float} originX: The origin's pixel x coordinate as a proportion (in the interval [0, 1]) of the total width
+	@param {float} originY: The origin's pixel y coordinate as a proportion (in the interval [0, 1]) of the total height
+	@param {number} minX: lower bound of x to show on the Plot. Must be less than maxX
+	@param {number} maxX: upper bound of x to show on the Plot. Must be greater than minX
+	@param {number} minY: lower bound of y to show on the Plot. Must be less than maxY
+	@param {number} maxY: upper bound of y to show on the Plot. Must be greater than maxY
+	@param {bool} draggableOrigin: Allow the origin to be dragged with the mouse
+	@param {p5 color object} xAxisColor: the color of the x axis
+	@param {p5 color object} yAxisColor: the color of the y axis
+	@param {bool} axesEnabled: show the axes on the Plot
+	@param {bool} ticksEnabled: show tick lines on the axes
+	@param {bool} lineNumbersEnabled: show line numbers on the axes
+	@param {bool} gridLinesEnabled: show the minor gridlines
+	@param {string} xLabel: the label to use for the x axis. if null, no label is given to the axis.
+	@param {p5 color object} xLabelColor: the color of the x axis label
+	@param {int} text size of the x axis label
+	@param {string} yLabel: the label to use for the y axis. if null, no label is given to the axis.
+	@param {p5 color object} yLabelColor: the color of the y axis label
+	@param {int} text size of the y axis label
+	@param {string} titleLabel: the label at the top of the Plot. if null, no title is used.
+	@param {p5 color object} titleLabelColor: The color of the title label
+	@param {int} titleLabelSize: text size of title label
+	@param {p5 color object} backgroundColor: the Plot's background color
+	@param {string} xScaling: the scale to use on the x axis. can be "linear" or "logarithmic"
+	@param {string} yScaling: the scale to use on the y axis. can be "linear" or "logarithmic"
+	@param {number} xLogBase: the log base to use in logarithmic scale mode on the x axis
+	@param {number} yLogBase: the log base to use in logarithmic scale mode on the y axis
+	@param {string} projectionMode: The type of coordinate projection to use. Can be "rectangular" or "polar".
 	*/
+	constructor(originX=0.5, originY=0.5, minX=-1, maxX=1, minY=-1, maxY=1, draggableOrigin=true,
+		xAxisColor=color(0, 0, 0), yAxisColor=color(0, 0, 0), axesEnabled=true, ticksEnabled=true, lineNumbersEnabled=true,
+		gridLinesEnabled=false, xLabel=null, xLabelColor=color(0, 0, 0), xLabelSize=10, yLabel=null, yLabelColor=color(0, 0, 0),
+		yLabelSize=10, titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255),
+		xScaling="linear", yScaling="linear", xLogBase=null, yLogBase=null, projectionMode="rectangular") {
+
+		super(titleLabel, titleLabelColor, titleLabelSize, backgroundColor);
+		this.setDraggableOrigin(draggableOrigin);
+		this.setXAxisColor(xAxisColor);
+		this.setYAxisColor(yAxisColor);
+
+		this.setAxesEnabled(axesEnabled);
+		this.setTicksEnabled(ticksEnabled);
+		this.setLineNumbersEnabled(lineNumbersEnabled);
+		this.setGridLinesEnabled(gridLinesEnabled);
+
+		this.setXAxisLabel(xLabel, xLabelColor, xLabelSize);
+		this.setYAxisLabel(yLabel, yLabelColor, yLabelSize);
+
+		this.setXScaling(xScaling);
+		this.setYScaling(yScaling);
+		this.setXLogBase(xLogBase);
+		this.setYLogBase(yLogBase);
+		this.setProjectionMode(projectionMode);
+
+		this.setOrigin(originX, originY);
+		this.calculateBounds(minX, maxX, minY, maxY);
+	}
+
+	getOriginX() {
+		return this.config.general.originX;
+	}
+
+	getOriginY() {
+		return this.config.general.originY;
+	}
+
+	getOriginPixelX() {
+		return this.config.general.originPixelX;
+	}
+
+	getOriginPixelY() {
+		return this.config.general.originPixelY;
+	}
+
+	getXMin() {
+		return this.config.general.xMin;
+	}
+
+	getXMax() {
+		return this.config.general.xMax;
+	}
+
+	getYMin() {
+		return this.config.general.yMin;
+	}
+
+	getYMax() {
+		return this.config.general.yMax;
+	}
+
+	/* Return [xMin, xMax] */
+	getXBounds() {
+		return [this.getXMin(), this.getXMax()];
+	}
+
+	/* Return [yMin, yMax] */
+	getYBounds() {
+		return [this.getYMin(), this.getYMax()];
+	}
+
+	/* Return [xMin, xMax, yMin, yMax] */
+	getBounds() {
+		return [this.getXMin(), this.getXMax(), this.getYMin(), this.getYMax()];
+	}
+
+	getXUnits() {
+		return this.config.general.xUnits;
+	}
+
+	getYUnits() {
+		return this.config.general.yUnits;
+	}
+
+	getDraggableOrigin() {
+		return this.config.general.draggableOrigin;
+	}
+
+	getXAxisColor() {
+		return this.config.style.xAxisColor;
+	}
+
+	getYAxisColor() {
+		return this.config.general.yAxisColor;
+	}
+
+	getAxesEnabled() {
+		return this.config.general.axesEnabled;
+	}
+
+	getTicksEnabled() {
+		return this.config.general.ticksEnabled;
+	}
+
+	getLineNumbersEnabled() {
+		return this.config.general.lineNumbersEnabled;
+	}
+
+	getGridLinesEnabled() {
+		return this.config.general.gridLinesEnabled;
+	}
+
+	getXAxisLabel() {
+		return this.labels.xAxis;
+	}
+
+	getYAxisLabel() {
+		return this.labels.yAxis;
+	}
+
+	getXScaling() {
+		return this.config.general.xScaling;
+	}
+
+	getYScaling() {
+		return this.config.general.yScaling;
+	}
+
+	getXLogBase() {
+		return this.config.general.xLogBase;
+	}
+
+	getYLogBase() {
+		return this.config.general.yLogBase;
+	}
+
+	getProjectionMode() {
+		return this.config.general.projectionMode;
+	}
+
+	onDimensionSet() {
+		this.hasDimensionsSet = true;
+		this.setOrigin(this.originX, this.originY);
+		this.calculateBounds(this.xMin, this.xMax, this.yMin, this.yMax);
+	}
+
+	setOrigin(originX, originY) {
+		if (!(0 <= originX && originX <= 1 && 0 <= originY && originY <= 1)) throw new Error("Origin proportions must be on the interval [0, 1].");
+		this.config.general.originX = originX;
+		this.config.general.originY = originY;
+
+		if (this.hasDimensionsSet) {
+			this.config.general.originPixelX = this.getOriginX() * this.getPixelWidth();
+			this.config.general.originPixelY = this.getOriginY() * this.getPixelHeight();
+		}
+
+		this.needsUpdate = true;
+	}
+
+	/* There is no way to set the x or y bounds individually. */
+	calculateBounds(xMin, xMax, yMin, yMax) {
+		if (xMin >= xMax || yMin >= yMax) throw new Error("xMin must be less than xMax and yMin must be less than yMax.");
+		this.config.general.xMin = xMin;
+		this.config.general.xMax = xMax;
+		this.config.general.yMin = yMin;
+		this.config.general.yMax = yMax;
+		this.config.general.xUnits = xMax - xMin;
+		this.config.general.yUnits = yMax - yMin;
+
+		if (this.hasDimensionsSet) {
+			// calculate scaling. account for origin
+		}
+
+		this.needsUpdate = true;
+	}
+
+	setDraggableOrigin(draggableOrigin) {
+		this.config.general.draggableOrigin = draggableOrigin;
+	}
+
+	setXAxisColor(xAxisColor) {
+		this.config.style.xAxisColor = xAxisColor;
+		this.needsUpdate = true;
+	}
+
+	setYAxisColor(yAxisColor) {
+		this.config.style.yAxisColor = yAxisColor;
+		this.needsUpdate = true;
+	}
+
+	setAxesEnabled(axesEnabled) {
+		this.config.general.axesEnabled = axesEnabled;
+		this.needsUpdate = true;
+	}
+
+	setTicksEnabled(ticksEnabled) {
+		this.config.general.ticksEnabled = ticksEnabled;
+		this.needsUpdate = true;
+	}
+
+	setLineNumbersEnabled(lineNumbersEnabled) {
+		this.config.general.lineNumbersEnabled = lineNumbersEnabled;
+		this.needsUpdate = true;
+	}
+
+	setGridLinesEnabled(gridLinesEnabled) {
+		this.config.general.gridLinesEnabled = gridLinesEnabled;
+		this.needsUpdate = true;
+	}
+
+	setXAxisLabel(xAxisLabel, xLabelColor, xLabelSize) {
+		this.labels.xAxis = this.generateLabel(xAxisLabel, xLabelColor, xLabelSize, "horizontal");
+		this.needsUpdate = true;
+	}
+
+	setYAxisLabel(yAxisLabel, yLabelColor, yLabelSize) {
+		this.labels.yAxis = this.generateLabel(yAxisLabel, yLabelColor, yLabelSize, "vertical");
+		this.needsUpdate = true;
+	}
+
+	setXScaling(xScaling) {
+		this.config.general.xScaling = xScaling;
+		this.needsUpdate = true;
+	}
+
+	setYScaling(yScaling) {
+		this.config.general.yScaling = yScaling;
+		this.needsUpdate = true;
+	}
+
+	setXLogBase(xLogBase) {
+		this.config.general.xLogBase = xLogBase;
+		this.needsUpdate = true;
+	}
+
+	setYLogBase(yLogBase) {
+		this.config.general.yLogBase = yLogBase;
+		this.needsUpdate = true;
+	}
+
+	setProjectionMode(projectionMode) {
+		if (projectionMode === "rectangular" || projectionMode === "polar") {
+			this.config.general.projectionMode = projectionMode;
+		} else {
+			throw new Error("Projection mode must be 'rectangular' or 'polar', not " + projectionMode);
+		}
+	}
 
 }
 
@@ -547,8 +844,16 @@ class FunctionPlot2D extends Plot2D {
 }
 
 
+class Curve2D {
 
+	/*
+	curve class
+	*/
+	constructor() {
 
+	}
+
+}
 
 
 //\ ------------------------------------------------------------------------------------------------------------------ /\\
