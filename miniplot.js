@@ -61,10 +61,10 @@ Also at least make some effort to optimize.. this file could become very useful 
 
 
 class PlotWindow { // PlotWindow is a name already in the global scope. do not rename it to that
-	
+
 	/*
 	This is the overall manager for the library. The PlotWindow class manages all Plots and handles overall configurations.
-	
+
 	@param {int} x: x position of the PlotWindow, in pixels
 	@param {int} y: y position of the PlotWindow, in pixels
 	@param {int} pixelWidth: The width of the PlotWindow, in pixels
@@ -91,7 +91,7 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 		this.setX(x);
 		this.setY(y);
 		this.generatePlotGrid();
-		
+
 		this.setPixelDimensions(pixelWidth, pixelHeight, false);
 		this.setMargin(margin, false);
 		this.setMarginLeft(marginLeft, false);
@@ -102,83 +102,83 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 		this.setVerticalPadding(verticalPadding);
 		this.setBackgroundColor(backgroundColor);
 	}
-	
+
 	getPixelWidth() {
 		return this.config.general.pixelWidth;
 	}
-	
+
 	getPixelHeight() {
 		return this.config.general.pixelHeight;
 	}
-	
+
 	getPlotsX() {
 		return this.config.general.plotsX;
 	}
-	
+
 	getPlotsY() {
 		return this.config.general.plotsY;
 	}
-	
+
 	getX() {
 		return this.config.general.x;
 	}
-	
+
 	getY() {
 		return this.config.general.y;
 	}
-	
+
 	getMargin() {
 		return this.config.style.margin;
 	}
-	
+
 	getMarginLeft() {
 		return this.config.style.marginLeft;
 	}
-	
+
 	getMarginRight() {
 		return this.config.style.marginRight;
 	}
-	
+
 	getMarginTop() {
 		return this.config.style.marginTop;
 	}
-	
+
 	getMarginBottom() {
 		return this.config.style.marginBottom;
 	}
-	
+
 	getHorizontalPadding() {
 		return this.config.style.horizontalPadding;
 	}
-	
+
 	getVerticalPadding() {
 		return this.config.style.verticalPadding;
 	}
-	
+
 	getTotalHorizontalPadding() {
 		return this.getHorizontalPadding() * (this.getPlotsX() - 1);
 	}
-	
+
 	getTotalVerticalPadding() {
 		return this.getVerticalPadding() * (this.getPlotsY() - 1);
 	}
-	
+
 	getPlotWidth() {
 		return this.config.general.plotWidth;
 	}
-	
+
 	getPlotHeight() {
 		return this.config.general.plotHeight;
 	}
-	
+
 	getPlot(a, b) {
 		return this.plotGrid[a][b];
 	}
-	
+
 	getBackgroundColor() {
 		return this.config.style.backgroundColor;
 	}
-	
+
 	setPixelWidth(pixelWidth, resize=true) {
 		// reset the PlotWindow here... this.surface = createGraphics(pixelWidth, pixelHeight)
 		if (pixelWidth <= 0) {
@@ -193,7 +193,7 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 			throw new Error("pixelWidth should be less than the parent canvas width.");
 		}
 	}
-	
+
 	setPixelHeight(pixelHeight, resize=true) {
 		if (pixelHeight <= 0) {
 			throw new Error("pixelHeight cannot be less than or equal to zero.");
@@ -206,41 +206,41 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 			throw new Error("pixelHeight should be less than the parent canvas height.");
 		}
 	}
-	
+
 	/* Set both pixelHeight and pixelWidth at once */
 	setPixelDimensions(pixelWidth, pixelHeight, resize=true) {
 		this.setPixelWidth(pixelWidth, false);
 		this.setPixelHeight(pixelHeight, resize);
 	}
-	
+
 	setPlotsX(plotsX) {
 		this.config.general.plotsX = plotsX;
 	}
-	
+
 	setPlotsY(plotsY) {
 		this.config.general.plotsY = plotsY;
 	}
-	
+
 	setX(x) {
 		this.config.general.x = x;
 	}
-	
+
 	setY(y) {
 		this.config.general.y = y;
 	}
-	
+
 	/* Set both x and y coordinates */
 	setCoordinates(x, y) {
 		this.setX(x);
 		this.setY(y);
 	}
-	
+
 	/* Set both plotsX and plotsY at once */
 	setPlotDimensionGrid(plotsX, plotsY) {
 		this.setPlotsX(plotsX);
 		this.setPlotsY(plotsY);
 	}
-	
+
 	setMargin(margin, check=false) {
 		if ((margin * 2 + this.getTotalHorizontalPadding() >= this.getPixelWidth) ||
 			(margin * 2 + this.getTotalVerticalPadding() >= this.getPixelHeight)) {
@@ -255,47 +255,47 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 			}
 		}
 	}
-	
+
 	setMarginLeft(marginLeft, resize=true) {
 		this.config.style.marginLeft = max(this.getMargin(), marginLeft);
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
-	
+
 	setMarginRight(marginRight, resize=true) {
 		this.config.style.marginRight = max(this.getMargin(), marginRight);
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
-	
+
 	setMarginTop(marginTop, resize=true) {
 		this.config.style.marginTop = max(this.getMargin(), marginTop);
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
-	
+
 	setMarginBottom(marginBottom, resize=true) {
 		this.config.style.marginBottom = max(this.getMargin(), marginBottom);
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
-	
+
 	setHorizontalPadding(horizontalPadding, resize=true) {
 		this.config.style.horizontalPadding = horizontalPadding;
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
-	
+
 	setVerticalPadding(verticalPadding, resize=true) {
 		this.config.style.verticalPadding = verticalPadding;
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
-	
+
 	/* this should not be called by users */
 	setPlotWidth(plotWidth) {
 		this.config.general.plotWidth = plotWidth;
 	}
-	
+
 	 /* this should not be called by users */
 	setPlotHeight(plotHeight) {
 		this.config.general.plotHeight = plotHeight;
 	}
-	
+
 	/*
 	set the Plot at (a, b) to the plot
 	@param {Plot or subclass} plot
@@ -316,11 +316,11 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 			throw new Error("a must be in range [0, plotsX] and b must be in the range [0, plotsY).");
 		}
 	}
-	
+
 	setBackgroundColor(backgroundColor) {
 		this.config.style.backgroundColor = backgroundColor;
 	}
-	
+
 	/* Determine the width and height of all Plots in the PlotWindow. Resize the Plots accordingly. */
 	calculatePlotWindowAndPlotDimensions() {
 		this.surface = createGraphics(this.getPixelWidth(), this.getPixelHeight());
@@ -332,7 +332,7 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 			}
 		}
 	}
-	
+
 	generatePlotGrid() {
 		this.plotGrid = [];
 		let row = [];
@@ -344,17 +344,17 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 			this.plotGrid.push(row.slice());
 		}
 	}
-	
+
 	/* Calculate the pixel position of the plot at row a and column b */
 	calculatePlotPosition(a, b) {
 		return createVector(this.getMarginLeft() + a * (this.getPlotWidth() + this.getHorizontalPadding()),
 							this.getMarginTop() + b * (this.getPlotHeight() + this.getVerticalPadding()));
 	}
-	
+
 	/* Draw all Plots */
 	draw() {
 		this.surface.background(this.getBackgroundColor());
-		
+
 		let row = [], plot, pos;
 		for (let a=0; a<this.plotGrid.length; a++) {
 			row = this.plotGrid[a];
@@ -367,10 +367,10 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 				}
 			}
 		}
-		
+
 		image(this.surface, this.getX(), this.getY());
 	}
-	
+
 	/*
 	Save an image of the current PlotWindow view.
 	@param {string} filename: The name of the save file
@@ -378,141 +378,172 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 	save(filename) {
 		// probably use p5.js saveCanvas() / saveImage()
 	}
-	
+
 }
 
 
-Plot
-	- bounds method, coordinate transformation method, axes, LABELS (for axes and for the plot) all to be overridden
-	- background color
-	- method: plot() to be overridden
-	- DO NOT add to the PlotWindow. this is done manually by the user. Plot should NOT contain a reference to the PlotWindow it is contained by.
-	- primitive drawing functions to be overridden
-	- method: resize (the entire plotting area.. pixel dimensions). this should not be called by a user.
-
-
 class Plot {
-	
+
 	/*
 	The Plot class is the base class for all plotting areas, or, the areas where all the plotting is done
-	
-	@param {p5 color object}: backgroundColor
+
+	@param {string} titleLabel: the label at the top of the Plot. if null, no title is used.
+	@param {p5 color object} titleLabelColor: The color of the title label
+	@param {int} titleLabelSize: text size of color label
+	@param {p5 color object} backgroundColor: the Plot's background color
 	*/
-	
-	constructor(backgroundColor=color(255, 255, 255)) {
+
+	constructor(titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255)) {
 		this.config = {
 			general: {},
 			style: {},
-		}
+		};
+		this.labels = {};
+
 		this.hasDimensionsSet = false;
+		this.setTitleLabel(titleLabel, titleLabelColor, titleLabelSize);
 		this.setBackgroundColor(backgroundColor);
 	}
-	
+
 	getPixelWidth() {
 		return this.config.general.pixelWidth;
 	}
-	
+
 	getPixelHeight() {
 		return this.config.general.pixelHeight;
 	}
-	
+
 	getBackgroundColor() {
 		return this.config.style.backgroundColor;
 	}
-	
+
+	getTitleLabel() {
+		return this.labels.titleLabel;
+	}
+
+	getLabels() {
+		return this.labels;
+	}
+
+	/* This method should not be called by a user. */
 	setPixelWidth(pixelWidth) {
 		this.config.general.pixelWidth = pixelWidth;
+		this.needsUpdate = true;
 	}
-	
+
+	/* This method should not be called by a user. */
 	setPixelHeight(pixelHeight) {
 		this.config.general.pixelHeight = pixelHeight;
+		this.needsUpdate = true;
 	}
-	
+
+	/* This method should not be called by a user. */
 	setDimensions(pixelWidth, pixelHeight) {
 		this.hasDimensionsSet = true;
 		this.setPixelWidth(pixelWidth);
 		this.setPixelHeight(pixelHeight);
 		this.surface = createGraphics(this.getPixelWidth(), this.getPixelHeight());
+		this.needsUpdate = true;
 	}
-	
+
+	setTitleLabel(titleLabel, titleLabelColor, titleLabelSize) {
+		this.labels.titleLabel = this.generateLabel(titleLabel, titleLabelColor, titleLabelSize);
+	}
+
 	setBackgroundColor(backgroundColor) {
 		this.config.style.backgroundColor = backgroundColor;
 		this.needsUpdate = true;
 	}
-	
+
+	/*
+	Generate a label JS object
+	@param {string} labelText: the text of the label
+	@param {p5 color object} labelColor: the color of the label
+	@param {int} labelSize: the text size of the label
+	@param {string} labelOrientation: the orientation of the label. either "horizontal" or "vertical"
+	*/
+	generateLabel(labelText, labelColor, labelSize, labelOrientation="horizontal") {
+		return {
+			labelText: labelText,
+			labelColor: labelColor,
+			labelSize: labelSize,
+			labelOrientation: labelOrientation,
+		};
+	}
+
 	/* Determine the new bounds of the Plot. To be overridden by subclasses. */
 	calculateBounds() {
-		
+
 	}
-	
+
 	/*
 	Transform the coordinates to match the Plot's coordinate system. to be overridden by subclasses
 	@param {p5.Vector} point: the point to transform.
 	@returns {p5.Vector} the transformed point.
 	*/
 	coordinateTransform(point) {
-		
+
 	}
-	
+
 	/* update and draw the plot. to be overridden by subclasses */
 	updateState() {
 		this.surface.background(this.getBackgroundColor());
 	}
-	
+
 	/* check if the Plot should be updated. if so, call this.updateState() */
 	update() {
 		/*  */
 		if (this.hasDimensionsSet && this.needsUpdate) {
-			this.updateState():
+			this.updateState();
 		}
 		this.needsUpdate = false;
 	}
-	
+
 }
 
 
 class Plot2D extends Plot {
-	
+
 	/*
 	The base class for all types of 2D Plots.
 	*/
-	
+
 }
 
 
 class Plot3D extends Plot {
-	
+
 	/*
 	The base class for all types of 3D plots.
 	*/
-	
+
 }
 
 
 class DataPlot2D extends Plot2D {
-	
+
 	/*
 	A Plot that is created from discrete x and y data
 	*/
-	
+
 }
 
 
 class ContinuousUpdateDataPlot2D extends DataPlot2D {
-	
+
 	/*
 	DataPlot2D that constantly drops data off the back and takes new data at the front, retaining a certain number of data points
 	*/
-	
+
 }
 
 
 class FunctionPlot2D extends Plot2D {
-	
+
 	/*
 	A Plot that generates data based on a 1 dimensional function
 	*/
-	
+
 }
 
 
@@ -526,11 +557,11 @@ let win;
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	canvas.parent("canvas-div");
-	
-	//win = new PlotWindow(0, 0, 400, 400, 2, 2);
-	//win.setPlot(new Plot(), 0, 0);
+
+	win = new PlotWindow(0, 0, 400, 400, 1, 1);
+	win.setPlot(new Plot(), 0, 0);
 }
 
 function draw() {
-	//win.draw();
+	win.draw();
 }
