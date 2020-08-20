@@ -24,7 +24,7 @@ const simpsonsRuleApproximation = (f, a, b, steps=100) => {
 
 class Pendulum {
 
-	constructor(pivotX, pivotY, massDiameter=40, cordLength=150, mass=1, initialTheta=0, cordColor=colors.black, massColor=colors.red) {
+	constructor(pivotX, pivotY, massDiameter=40, cordLength=150, mass=1, initialTheta=0, cordColor=colors.black, massColor=colors.blue) {
 		this.theta = initialTheta - HALF_PI;
 		this.theta0 = this.theta;
 		this.lastTheta = this.theta;
@@ -357,8 +357,19 @@ const drawInfo = (paddingX=20, paddingY=20) => {
 		plotWindow.setCoordinates(minX, minY+=30);
 		plotWindow.setPixelDimensions(width - minX - paddingX / 2, height - minY - paddingY / 2);
 	}
+	handlePlots();
+}
+
+
+function handlePlots() {
+	const xData = linearSpace(-PI, PI, 25);
+	curve1.setData(xData, xData.map(e => sin(e + frameCount / 20)));
+	curve2.setData(xData, xData.map(e => cos(e + frameCount / 30)));
+	plot1.scaleToFitAllData();
+	plot2.scaleToFitAllData();
 	plotWindow.draw();
 }
+
 
 function mousePressed() {
 	if (0 <= mouseX) {
@@ -438,7 +449,7 @@ const resetSimTime = () => {
 /* end      */
 
 
-let pendulum, paused, trace, showGuides, simTime, secondarySurf, mode, plotWindow;
+let pendulum, paused, trace, showGuides, simTime, secondarySurf, mode, plotWindow, plot1, plot2, curve1, curve2;
 function setup() {
 	canvas = createCanvas(windowWidth * .75, windowHeight);
 	canvas.parent("canvas-div");
@@ -446,8 +457,15 @@ function setup() {
 	secondarySurf.background(255);
 	document.getElementById("gui-div").style.height = windowHeight.toString() + "px";
 	plotWindow = new PlotWindow(0, 0, 1, 1, 1, 2);
-	plotWindow.setPlot(new Plot(), 0, 0);
-	plotWindow.setPlot(new Plot(), 0, 1);
+	plotWindow.setMargins(0, 5, 5, 5, 5);
+	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0);
+	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1);
+
+	curve1 = plot1.plot(new Curve2D([-1, 1], [-1, 1]));
+	curve2 = plot2.plot(new Curve2D([-1, 1], [-1, 1]));
+	curve2.setCurveColor(color(0, 0, 255));
+	curve1.setCurveWeight(2);
+	curve2.setCurveWeight(2);
 
 	pendulum = new Pendulum(width/3, height/5, height/15, height/3);
 	paused = false;

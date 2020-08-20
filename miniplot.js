@@ -60,6 +60,23 @@ Also at least make some effort to optimize.. this file could become very useful 
 */
 
 
+/*
+Generate an evenly array of number data
+@param {number} start: lower bound on the data values
+@param {number} stop: upper bound on the data values
+@param {number} n: number of data values to have
+*/
+function linearSpace(start, stop, n=100) {
+	const step = (stop - start) / (n - 1);
+	const result = [];
+	for (let i=0; i<=n; i++) {
+		result.push(start);
+		start += step;
+	}
+	return result;
+}
+
+
 class PlotWindow { // PlotWindow is a name already in the global scope. do not rename it to that
 
 	/*
@@ -276,6 +293,15 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
 	}
 
+	/* set all margins at once */
+	setMargins(overall, left, right, top, bottom) {
+		this.setMargin(overall);
+		this.setMarginLeft(left);
+		this.setMarginRight(right);
+		this.setMarginTop(top);
+		this.setMarginBottom(bottom)
+	}
+
 	setHorizontalPadding(horizontalPadding, resize=true) {
 		this.config.style.horizontalPadding = horizontalPadding;
 		if (resize) this.calculatePlotWindowAndPlotDimensions();
@@ -313,7 +339,7 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 				throw new Error("plot must be a Plot or subclass.");
 			}
 		} else {
-			throw new Error("a must be in range [0, plotsX] and b must be in the range [0, plotsY).");
+			throw new Error("a must be in range [0, plotsX) and b must be in the range [0, plotsY).");
 		}
 	}
 
@@ -491,6 +517,17 @@ class Plot {
 
 	}
 
+	/*
+	Draw a line to the Plot's surface. Does not handle styling.
+	@param {p5.Vector} A: The starting point of the line
+	@param {p5.Vector} B: the ending point of the line
+	*/
+	drawLine(A, B) {
+		A = this.coordinateTransform(A);
+		B = this.coordinateTransform(B);
+		this.surface.line(A.x, A.y, B.x, B.y);
+	}
+
 	/* update and draw the plot. to be overridden by subclasses */
 	updateState() {
 		this.surface.background(this.getBackgroundColor());
@@ -507,22 +544,6 @@ class Plot {
 
 }
 
-/*
-Plot2D
-	- projection mode: rectangular/polar (done)
-	- origin position: (%x, %y) from topleft (done)
-	- draggableOrigin=true
-	- setBounds override (done)
-	- primitive drawing override
-	- x axis color, y axis color (done)
-	- coordinate transformation override
-	- drawAxes override (including labels for axes and the entire plot)
-	- method: scaleToFitAllData() (done)
-	- method: scaleXToFitAllData() (done)
-	- method: scaleYToFitAllData() (done)
-	- method: resizeToFitCurve(single curve) (done)
-	- method: updateState NOT update. look at the Plot class when making this one
-*/
 
 class Plot2D extends Plot {
 
@@ -652,7 +673,7 @@ class Plot2D extends Plot {
 	}
 
 	getYAxisColor() {
-		return this.config.general.yAxisColor;
+		return this.config.style.yAxisColor;
 	}
 
 	getAxesEnabled() {
@@ -713,8 +734,8 @@ class Plot2D extends Plot {
 
 	onDimensionSet() {
 		this.hasDimensionsSet = true;
-		this.setOrigin(this.originX, this.originY);
-		this.calculateBounds(this.xMin, this.xMax, this.yMin, this.yMax);
+		this.setOrigin(this.getOriginX(), this.getOriginY());
+		this.calculateBounds(this.getXMin(), this.getXMax(), this.getYMin(), this.getYMax());
 	}
 
 	setOrigin(originX, originY) {
@@ -847,9 +868,19 @@ class Plot2D extends Plot {
 		}
 
 		return createVector(
-			this.getOriginX() + x * this.getXScale(),
-			this.getOriginY() - (y * this.getYScale()),
+			this.getOriginPixelX() + x * this.getXScale(),
+			this.getOriginPixelY() - y * this.getYScale(),
 		);
+	}
+
+	/*
+	Transform the coordinates from canvas space to 2D plane space.
+	@param {p5.Vector} point: the point to transform.
+	@returns {p5.Vector} the transformed point.
+	*/
+	reverseTransform(point) {
+		return createVector((point.x - this.getOriginPixelX()) / this.getXScale(),
+							(this.getOriginPixelY() - point.y) / this.getYScale());
 	}
 
 	/* Resize the x bounds of the Plot to fit all data */
@@ -860,10 +891,11 @@ class Plot2D extends Plot {
 				lmin = curve.getXMin();
 				lmax = curve.getXMax();
 				if (lmin < xMin) xMin = lmin;
-				if (lmax < xMax) xMax = lmax;
+				if (lmax > xMax) xMax = lmax;
 			}
 			if (xMin !== xMax) this.calculateBounds(xMin*1.1, xMax*1.1, this.getYMin(), this.getYMax());
 		}
+		this.needsUpdate = true;
 	}
 
 	/* Resize the y bounds of the Plot to fit all data */
@@ -874,10 +906,11 @@ class Plot2D extends Plot {
 				lmin = curve.getYMin();
 				lmax = curve.getYMax();
 				if (lmin < yMin) yMin = lmin;
-				if (lmax < yMax) yMax = lmax;
+				if (lmax > yMax) yMax = lmax;
 			}
-			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getYMin(), yMin*1.1, yMax*1.1);
+			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getXMax(), yMin*1.1, yMax*1.1);
 		}
+		this.needsUpdate = true;
 	}
 
 	/* Resize the Plot bounds to fit all data */
@@ -892,6 +925,7 @@ class Plot2D extends Plot {
 		if (xMin !== xMax) {
 			this.calculateBounds(xMin * 1.1, xMax * 1.1, this.getYMin(), this.getYMax());
 		}
+		this.needsUpdate = true;
 	}
 
 	/* Resize the Plot's y bounds to fit a curve */
@@ -900,6 +934,7 @@ class Plot2D extends Plot {
 		if (yMin !== yMax) {
 			this.calculateBounds(this.getXMin(), this.getXMax(), yMin * 1.1, yMax * 1.1);
 		}
+		this.needsUpdate = true;
 	}
 
 	/* Resize the Plot's bounds to fit a curve */
@@ -908,10 +943,44 @@ class Plot2D extends Plot {
 		this.scaleYToFitCurve(curve);
 	}
 
+	/*
+	Add a curve to the Plot
+	@param {Curve2D} curve: the curve to be added
+	@param {bool} resize: resize the Plot's bounds after adding the new Curve
+	@returns {Curve2D}: the curve that was added
+	*/
+	plot(curve, resize=true) {
+		if (!(curve instanceof Curve2D)) throw new Error("curve argument must be a Curve2D.");
+		this.curveArray.push(curve);
+		if (resize) this.scaleToFitAllData();
+		return curve;
+	}
+
+	/* Draw the axes */
+	drawAxes() {
+		// labels should be drawn here too.
+		push();
+		this.surface.strokeWeight(1);
+		if (this.getYMin() <= 0 && this.getYMax() >= 0) {
+			this.surface.stroke(this.getXAxisColor());
+			this.drawLine(createVector(this.getXMin(), 0), createVector(this.getXMax(), 0));
+		}
+		if (this.getXMin() <= 0 && this.getXMax() >= 0) {
+			this.surface.stroke(this.getYAxisColor());
+			this.drawLine(createVector(0, this.getYMin()), createVector(0, this.getYMax()));
+		}
+		pop();
+	}
+
 	updateState() {
-		background(this.getBackgroundColor());
+		this.surface.background(this.getBackgroundColor());
+		if (this.getAxesEnabled()) this.drawAxes();
+
+		for (let curve of this.curveArray) {
+			curve.draw(this);
+		}
 		// draw labels, plot, everything here.
-		// basically call the curve's drawing function
+		// basically call the curves' drawing functions
 	}
 
 }
@@ -926,16 +995,7 @@ class Plot3D extends Plot {
 }
 
 
-class DataPlot2D extends Plot2D {
-
-	/*
-	A Plot that is created from discrete x and y data
-	*/
-
-}
-
-
-class ContinuousUpdateDataPlot2D extends DataPlot2D {
+class ContinuousUpdatePlot2D extends Plot2D {
 
 	/*
 	DataPlot2D that constantly drops data off the back and takes new data at the front, retaining a certain number of data points
@@ -944,25 +1004,145 @@ class ContinuousUpdateDataPlot2D extends DataPlot2D {
 }
 
 
-class FunctionPlot2D extends Plot2D {
-
-	/*
-	A Plot that generates data based on a 1 dimensional function
-	*/
+class Curve {
 
 }
 
 
-class Curve2D {
+class Curve2D extends Curve {
 
 	/*
 	curve class
+	@param {array of numbers} xData: The x coordinates of all data. Must be the same length as yData
+	@param {array of numbers} yData: The y coordinates of all data. Must be the same length as xData
+	@param {p5 color object} curveColor: The color of the curve
+	@param {int} curveWeight: The thickness of the curve
+	@param {string} dataStyle: "continuous" - connect data in a smooth line, "discrete" - plot data as points, "both" - plot points and draw lines between
 
 	MUST HAVE:
 	- method: getMinX(), getMaxX(), getMinY(), getMaxY()
 	*/
-	constructor() {
+	constructor(xData, yData, curveColor=color(255, 100, 100), curveWeight=1, dataStyle="continuous") {
+		super();
+		this.curveStyle = {};
+		this.setData(xData, yData);
+		this.setCurveColor(curveColor);
+		this.setCurveWeight(curveWeight);
+		this.setDataStyle(dataStyle);
+	}
 
+	getData() {
+		return this.data;
+	}
+
+	getXMin() {
+		return this.xMin;
+	}
+
+	getXMax() {
+		return this.xMax;
+	}
+
+	getYMin() {
+		return this.yMin;
+	}
+
+	getYMax() {
+		return this.yMax;
+	}
+
+	getDataStyle() {
+		return this.curveStyle.dataStyle;
+	}
+
+	getCurveColor() {
+		return this.curveStyle.curveColor;
+	}
+
+	getCurveWeight() {
+		return this.curveStyle.curveWeight;
+	}
+
+	setCurveColor(curveColor) {
+		this.curveStyle.curveColor = curveColor;
+	}
+
+	setCurveWeight(curveWeight) {
+		this.curveStyle.curveWeight = curveWeight;
+	}
+
+	setDataStyle(dataStyle) {
+		this.curveStyle.dataStyle = dataStyle;
+	}
+
+	/* Not to be called by users */
+	setXMin(xMin) {
+		this.xMin = xMin;
+	}
+
+	/* Not to be called by users */
+	setXMax(xMax) {
+		this.xMax = xMax;
+	}
+
+	/* Not to be called by users */
+	setYMin(yMin) {
+		this.yMin = yMin;
+	}
+
+	/* Not to be called by users */
+	setYMax(yMax) {
+		this.yMax = yMax;
+	}
+
+	/* Not to be called by users. Sets xMin, xMax, yMin, yMax */
+	setExtremes(xMin, xMax, yMin, yMax) {
+		this.setXMin(xMin);
+		this.setXMax(xMax);
+		this.setYMin(yMin);
+		this.setYMax(yMax);
+	}
+
+	setData(xData, yData) {
+		if (xData.length !== yData.length) throw new Error("xData and yData must be the same length.");
+
+		this.data = [];
+		let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity, x, y;
+		for (let i=0; i<xData.length; i++) {
+			x = xData[i];
+			y = yData[i];
+			if (x < xMin) xMin = x;
+			if (x > xMax) xMax = x;
+			if (y < yMin) yMin = y;
+			if (y > yMax) yMax = y;
+
+			this.data.push(createVector(x, y));
+		}
+		this.setExtremes(xMin, xMax, yMin, yMax);
+	}
+
+	/*
+	Draw the curve to the surface of the passed Plot.
+	@param {Plot2D or subclass} plot2d: The target Plot
+	*/
+	draw(plot2d) {
+		const data = this.getData();
+		let lastPoint = null, P;
+
+		push();
+		plot2d.surface.stroke(this.getCurveColor());
+		plot2d.surface.strokeWeight(this.getCurveWeight());
+		for (let i=0; i<data.length; i++) {
+			P = data[i];
+			if (this.getDataStyle() !== "continuous") { // discrete or both
+				// draw a point here, but do this later
+			}
+			if (this.getDataStyle() !== "discrete") { // continuous or both
+				if (lastPoint !== null) plot2d.drawLine(lastPoint, P);
+				lastPoint = P;
+			}
+		}
+		pop();
 	}
 
 }
@@ -970,15 +1150,33 @@ class Curve2D {
 
 //\ ------------------------------------------------------------------------------------------------------------------ /\\
 
-let win;
+
+/* Testing:
+let win, plot1, plot2, xData, curves;
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	canvas.parent("canvas-div");
 
-	win = new PlotWindow(0, 0, 400, 400, 1, 1);
-	win.setPlot(new Plot2D(), 0, 0);
+	win = new PlotWindow(0, 0, 400, 400, 1, 2);
+	plot1 = win.setPlot(new Plot2D(), 0, 0);
+	plot2 = win.setPlot(new Plot2D(), 0, 1);
+
+	xData = []; curves = [];
+	xData[0] = linearSpace(-3, 3);
+	xData[1] = linearSpace(-3, 3);
+	xData[2] = linearSpace(-1, 1);
+	xData[3] = linearSpace(-2, 2);
+
+	curves[0] = plot1.plot(new Curve2D(xData[0], xData[0].map(sin) ));
+	curves[1] = plot1.plot(new Curve2D(xData[1], xData[1].map(cos) ));
+	curves[2] = plot2.plot(new Curve2D(xData[2], xData[2].map(sin) ));
+	curves[3] = plot2.plot(new Curve2D(xData[3], xData[3].map(cos) ));
+
+	curves[1].setCurveColor(color(0, 0, 255));
+	curves[3].setCurveColor(color(0, 0, 255));
 }
 
 function draw() {
 	win.draw();
 }
+*/
