@@ -876,7 +876,7 @@ class Plot2D extends Plot {
 				if (lmin < yMin) yMin = lmin;
 				if (lmax < yMax) yMax = lmax;
 			}
-			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getYMin(), yMin*1.1, yMax*1.1;
+			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getYMin(), yMin*1.1, yMax*1.1);
 		}
 	}
 
@@ -906,6 +906,12 @@ class Plot2D extends Plot {
 	scaleToFitCurve(curve) {
 		this.scaleXToFitCurve(curve);
 		this.scaleYToFitCurve(curve);
+	}
+
+	updateState() {
+		background(this.getBackgroundColor());
+		// draw labels, plot, everything here.
+		// basically call the curve's drawing function
 	}
 
 }
@@ -970,7 +976,7 @@ function setup() {
 	canvas.parent("canvas-div");
 
 	win = new PlotWindow(0, 0, 400, 400, 1, 1);
-	win.setPlot(new Plot(), 0, 0);
+	win.setPlot(new Plot2D(), 0, 0);
 }
 
 function draw() {
