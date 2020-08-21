@@ -365,8 +365,6 @@ function handlePlots() {
 	const xData = linearSpace(-PI, PI, 25);
 	curve1.setData(xData, xData.map(e => sin(e + frameCount / 20)));
 	curve2.setData(xData, xData.map(e => cos(e + frameCount / 30)));
-	plot1.scaleToFitAllData();
-	plot2.scaleToFitAllData();
 	plotWindow.draw();
 }
 
@@ -456,16 +454,21 @@ function setup() {
 	secondarySurf = createGraphics(width, height);
 	secondarySurf.background(255);
 	document.getElementById("gui-div").style.height = windowHeight.toString() + "px";
+
+	/* Physical quantity plots */
 	plotWindow = new PlotWindow(0, 0, 1, 1, 1, 2);
 	plotWindow.setMargins(0, 5, 5, 5, 5);
 	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0);
 	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1);
+	plot1.setAutoFit(true);
+	plot2.setAutoFit(true);
 
 	curve1 = plot1.plot(new Curve2D([-1, 1], [-1, 1]));
 	curve2 = plot2.plot(new Curve2D([-1, 1], [-1, 1]));
 	curve2.setCurveColor(color(0, 0, 255));
-	curve1.setCurveWeight(2);
-	curve2.setCurveWeight(2);
+	curve1.setCurveWeight(3);
+	curve2.setCurveWeight(3);
+	/* end */
 
 	pendulum = new Pendulum(width/3, height/5, height/15, height/3);
 	paused = false;

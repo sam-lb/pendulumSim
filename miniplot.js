@@ -97,7 +97,7 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 	@param {int} verticalPadding: The total padding BETWEEN (not on the outermost borders of the Plots on the edge) in the vertical direction.
 	@param {p5 color object} backgroundColor: The PlotWindow's background color.
 	*/
-	constructor(x, y, pixelWidth=400, pixelHeight=400, plotsX=1, plotsY=1, margin=10, marginLeft=10, marginRight=10, marginTop=10, marginBottom=10,
+	constructor(x, y, pixelWidth=400, pixelHeight=400, plotsX=1, plotsY=1, margin=0, marginLeft=10, marginRight=10, marginTop=10, marginBottom=10,
 				horizontalPadding=5, verticalPadding=5, backgroundColor=color(0, 0, 0)) {
 		this.config = {
 			general: {},
@@ -578,12 +578,13 @@ class Plot2D extends Plot {
 	@param {number} xLogBase: the log base to use in logarithmic scale mode on the x axis
 	@param {number} yLogBase: the log base to use in logarithmic scale mode on the y axis
 	@param {string} projectionMode: The type of coordinate projection to use. Can be "rectangular" or "polar".
+	@param {bool} autoFit: Fit data every iteration, should be true if the Plot is continually updated with new data.
 	*/
 	constructor(originX=0.5, originY=0.5, minX=-1, maxX=1, minY=-1, maxY=1, draggableOrigin=true,
 		xAxisColor=color(0, 0, 0), yAxisColor=color(0, 0, 0), axesEnabled=true, ticksEnabled=true, lineNumbersEnabled=true,
 		gridLinesEnabled=false, xLabel=null, xLabelColor=color(0, 0, 0), xLabelSize=10, yLabel=null, yLabelColor=color(0, 0, 0),
 		yLabelSize=10, titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255),
-		xScaling="linear", yScaling="linear", xLogBase=null, yLogBase=null, projectionMode="rectangular") {
+		xScaling="linear", yScaling="linear", xLogBase=null, yLogBase=null, projectionMode="rectangular", autoFit=false) {
 
 		super(titleLabel, titleLabelColor, titleLabelSize, backgroundColor);
 		this.curveArray = [];
@@ -604,6 +605,7 @@ class Plot2D extends Plot {
 		this.setXLogBase(xLogBase);
 		this.setYLogBase(yLogBase);
 		this.setProjectionMode(projectionMode);
+		this.setAutoFit(autoFit);
 
 		this.setOrigin(originX, originY);
 		this.calculateBounds(minX, maxX, minY, maxY);
@@ -728,6 +730,10 @@ class Plot2D extends Plot {
 		return this.config.general.yScale;
 	}
 
+	getAutoFit() {
+		return this.config.general.autoFit;
+	}
+
 	getCurveArray() {
 		return this.curveArray();
 	}
@@ -841,6 +847,10 @@ class Plot2D extends Plot {
 		}
 	}
 
+	setAutoFit(autoFit) {
+		this.config.general.autoFit = autoFit;
+	}
+
 	/*
 	Add a Curve object (or subclass) to the CurveArray
 	@param {Curve} curve: the Curve to be added
@@ -883,8 +893,11 @@ class Plot2D extends Plot {
 							(this.getOriginPixelY() - point.y) / this.getYScale());
 	}
 
-	/* Resize the x bounds of the Plot to fit all data */
-	scaleXToFitAllData() {
+	/*
+	Resize the x bounds of the Plot to fit all data
+	@param {number} xFactor: the factor to scale the resulting x range by
+	*/
+	scaleXToFitAllData(xFactor=1.1) {
 		if (this.curveArray.length !== 0) {
 			let xMin = Infinity, xMax = -Infinity, lmin, lmax;
 			for (let curve of this.curveArray) {
@@ -893,13 +906,16 @@ class Plot2D extends Plot {
 				if (lmin < xMin) xMin = lmin;
 				if (lmax > xMax) xMax = lmax;
 			}
-			if (xMin !== xMax) this.calculateBounds(xMin*1.1, xMax*1.1, this.getYMin(), this.getYMax());
+			if (xMin !== xMax) this.calculateBounds(xMin*xFactor, xMax*xFactor, this.getYMin(), this.getYMax());
 		}
 		this.needsUpdate = true;
 	}
 
-	/* Resize the y bounds of the Plot to fit all data */
-	scaleYToFitAllData() {
+	/*
+	Resize the y bounds of the Plot to fit all data
+	@param {number} yFactor: the factor to scale the resulting y range by
+	*/
+	scaleYToFitAllData(yFactor=1.1) {
 		if (this.curveArray.length !== 0) {
 			let yMin = Infinity, yMax = -Infinity, lmin, lmax;
 			for (let curve of this.curveArray) {
@@ -908,15 +924,19 @@ class Plot2D extends Plot {
 				if (lmin < yMin) yMin = lmin;
 				if (lmax > yMax) yMax = lmax;
 			}
-			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getXMax(), yMin*1.1, yMax*1.1);
+			if (yMin !== yMax) this.calculateBounds(this.getXMin(), this.getXMax(), yMin*yFactor, yMax*yFactor);
 		}
 		this.needsUpdate = true;
 	}
 
-	/* Resize the Plot bounds to fit all data */
-	scaleToFitAllData() {
-		this.scaleXToFitAllData();
-		this.scaleYToFitAllData();
+	/*
+	Resize the Plot bounds to fit all data
+	@param {number} xFactor: the factor to scale the resulting x range by
+	@param {number} yFactor: the factor to scale the resulting y range by
+	*/
+	scaleToFitAllData(xFactor=1.1, yFactor=1.1) {
+		this.scaleXToFitAllData(xFactor);
+		this.scaleYToFitAllData(yFactor);
 	}
 
 	/* Resize the Plot's x bounds to fit a curve */
@@ -981,6 +1001,13 @@ class Plot2D extends Plot {
 		}
 		// draw labels, plot, everything here.
 		// basically call the curves' drawing functions
+	}
+
+	update() {
+		if (this.getAutoFit()) {
+			this.scaleToFitAllData();
+		}
+		super.update();
 	}
 
 }
