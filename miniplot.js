@@ -556,7 +556,6 @@ class Plot2D extends Plot {
 	@param {number} maxX: upper bound of x to show on the Plot. Must be greater than minX
 	@param {number} minY: lower bound of y to show on the Plot. Must be less than maxY
 	@param {number} maxY: upper bound of y to show on the Plot. Must be greater than maxY
-	@param {bool} draggableOrigin: Allow the origin to be dragged with the mouse
 	@param {p5 color object} xAxisColor: the color of the x axis
 	@param {p5 color object} yAxisColor: the color of the y axis
 	@param {bool} axesEnabled: show the axes on the Plot
@@ -580,7 +579,7 @@ class Plot2D extends Plot {
 	@param {string} projectionMode: The type of coordinate projection to use. Can be "rectangular" or "polar".
 	@param {bool} autoFit: Fit data every iteration, should be true if the Plot is continually updated with new data.
 	*/
-	constructor(originX=0.5, originY=0.5, minX=-1, maxX=1, minY=-1, maxY=1, draggableOrigin=true,
+	constructor(originX=0.5, originY=0.5, minX=-1, maxX=1, minY=-1, maxY=1,
 		xAxisColor=color(0, 0, 0), yAxisColor=color(0, 0, 0), axesEnabled=true, ticksEnabled=true, lineNumbersEnabled=true,
 		gridLinesEnabled=false, xLabel=null, xLabelColor=color(0, 0, 0), xLabelSize=10, yLabel=null, yLabelColor=color(0, 0, 0),
 		yLabelSize=10, titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255),
@@ -588,7 +587,6 @@ class Plot2D extends Plot {
 
 		super(titleLabel, titleLabelColor, titleLabelSize, backgroundColor);
 		this.curveArray = [];
-		this.setDraggableOrigin(draggableOrigin);
 		this.setXAxisColor(xAxisColor);
 		this.setYAxisColor(yAxisColor);
 
@@ -609,6 +607,8 @@ class Plot2D extends Plot {
 
 		this.setOrigin(originX, originY);
 		this.calculateBounds(minX, maxX, minY, maxY);
+
+		// calculate the origin's pixel position based on the bounds, you idiot. it can't be explicitly set.
 	}
 
 	getOriginX() {
@@ -664,10 +664,6 @@ class Plot2D extends Plot {
 
 	getYUnits() {
 		return this.config.general.yUnits;
-	}
-
-	getDraggableOrigin() {
-		return this.config.general.draggableOrigin;
 	}
 
 	getXAxisColor() {
@@ -773,10 +769,6 @@ class Plot2D extends Plot {
 		}
 
 		this.needsUpdate = true;
-	}
-
-	setDraggableOrigin(draggableOrigin) {
-		this.config.general.draggableOrigin = draggableOrigin;
 	}
 
 	setXAxisColor(xAxisColor) {
