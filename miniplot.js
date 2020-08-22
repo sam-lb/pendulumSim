@@ -377,6 +377,15 @@ class PlotWindow { // PlotWindow is a name already in the global scope. do not r
 							this.getMarginTop() + b * (this.getPlotHeight() + this.getVerticalPadding()));
 	}
 
+	/* Clear all Plots in this PlotWindow */
+	clearPlots() {
+		for (let row of this.plotGrid) {
+			for (let plot of row) {
+				if (plot !== null) plot.clear();
+			}
+		}
+	}
+
 	/* Draw all Plots */
 	draw() {
 		this.surface.background(this.getBackgroundColor());
@@ -419,7 +428,7 @@ class Plot {
 	@param {p5 color object} backgroundColor: the Plot's background color
 	*/
 
-	constructor(titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255)) {
+	constructor(titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=30, backgroundColor=color(255, 255, 255)) {
 		this.config = {
 			general: {},
 			style: {},
@@ -479,28 +488,13 @@ class Plot {
 	}
 
 	setTitleLabel(titleLabel, titleLabelColor, titleLabelSize) {
-		this.labels.titleLabel = this.generateLabel(titleLabel, titleLabelColor, titleLabelSize);
+		this.labels.titleLabel = new Label(titleLabel, 0.5, 0.1, titleLabelSize, titleLabelColor);
+		this.needsUpdate = true;
 	}
 
 	setBackgroundColor(backgroundColor) {
 		this.config.style.backgroundColor = backgroundColor;
 		this.needsUpdate = true;
-	}
-
-	/*
-	Generate a label JS object
-	@param {string} labelText: the text of the label
-	@param {p5 color object} labelColor: the color of the label
-	@param {int} labelSize: the text size of the label
-	@param {string} labelOrientation: the orientation of the label. either "horizontal" or "vertical"
-	*/
-	generateLabel(labelText, labelColor, labelSize, labelOrientation="horizontal") {
-		return {
-			labelText: labelText,
-			labelColor: labelColor,
-			labelSize: labelSize,
-			labelOrientation: labelOrientation,
-		};
 	}
 
 	/* Determine the new bounds of the Plot. To be overridden by subclasses. */
@@ -514,6 +508,11 @@ class Plot {
 	@returns {p5.Vector} the transformed point.
 	*/
 	coordinateTransform(point) {
+
+	}
+
+	/* Clear all data in this Plot. to be overridden */
+	clear() {
 
 	}
 
@@ -579,8 +578,8 @@ class Plot2D extends Plot {
 	*/
 	constructor(minX=-1, maxX=1, minY=-1, maxY=1,
 		xAxisColor=color(0, 0, 0), yAxisColor=color(0, 0, 0), axesEnabled=true, ticksEnabled=true, lineNumbersEnabled=true,
-		gridLinesEnabled=false, xLabel=null, xLabelColor=color(0, 0, 0), xLabelSize=10, yLabel=null, yLabelColor=color(0, 0, 0),
-		yLabelSize=10, titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255),
+		gridLinesEnabled=false, xLabel=null, xLabelColor=color(0, 0, 0), xLabelSize=20, yLabel=null, yLabelColor=color(0, 0, 0),
+		yLabelSize=20, titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=30, backgroundColor=color(255, 255, 255),
 		xScaling="linear", yScaling="linear", xLogBase=null, yLogBase=null, projectionMode="rectangular", autoFit=false) {
 
 		super(titleLabel, titleLabelColor, titleLabelSize, backgroundColor);
@@ -777,12 +776,14 @@ class Plot2D extends Plot {
 	}
 
 	setXAxisLabel(xAxisLabel, xLabelColor, xLabelSize) {
-		this.labels.xAxis = this.generateLabel(xAxisLabel, xLabelColor, xLabelSize, "horizontal");
+		this.labels.xAxis = new Label(xAxisLabel, 0.3, 0.95, xLabelSize, xLabelColor);
+		//this.labels.xAxis = this.generateLabel(xAxisLabel, xLabelColor, xLabelSize, "horizontal");
 		this.needsUpdate = true;
 	}
 
 	setYAxisLabel(yAxisLabel, yLabelColor, yLabelSize) {
-		this.labels.yAxis = this.generateLabel(yAxisLabel, yLabelColor, yLabelSize, "vertical");
+		this.labels.yAxis = new Label(yAxisLabel, 0.05, 0.5, yLabelSize, yLabelColor, "vertical");
+		//this.labels.yAxis = this.generateLabel(yAxisLabel, yLabelColor, yLabelSize, "vertical");
 		this.needsUpdate = true;
 	}
 
@@ -930,6 +931,12 @@ class Plot2D extends Plot {
 		this.scaleYToFitCurve(curve);
 	}
 
+	/* Clear all Curves from the Plot */
+	clear() {
+		this.curveArray = [];
+		this.needsUpdate = true;
+	}
+
 	/*
 	Add a curve to the Plot
 	@param {Curve2D} curve: the curve to be added
@@ -943,10 +950,17 @@ class Plot2D extends Plot {
 		return curve;
 	}
 
+	/* Draw the labels */
+	drawLabels() {
+		this.getXAxisLabel().draw(this);
+		this.getYAxisLabel().draw(this);
+		this.getTitleLabel().draw(this);
+	}
+
 	/* Draw the axes */
 	drawAxes() {
 		// labels should be drawn here too.
-		push();
+		this.surface.push();
 		this.surface.strokeWeight(1);
 		if (this.getYMin() <= 0 && this.getYMax() >= 0) {
 			this.surface.stroke(this.getXAxisColor());
@@ -956,7 +970,7 @@ class Plot2D extends Plot {
 			this.surface.stroke(this.getYAxisColor());
 			this.drawLine(createVector(0, this.getYMin()), createVector(0, this.getYMax()));
 		}
-		pop();
+		this.surface.pop();
 	}
 
 	updateState() {
@@ -966,6 +980,7 @@ class Plot2D extends Plot {
 		for (let curve of this.curveArray) {
 			curve.draw(this);
 		}
+		this.drawLabels();
 		// draw labels, plot, everything here.
 		// basically call the curves' drawing functions
 	}
@@ -1112,7 +1127,7 @@ class Curve2D extends Curve {
 		const data = this.getData();
 		let lastPoint = null, P;
 
-		push();
+		plot2d.surface.push();
 		plot2d.surface.stroke(this.getCurveColor());
 		plot2d.surface.strokeWeight(this.getCurveWeight());
 		for (let i=0; i<data.length; i++) {
@@ -1125,7 +1140,99 @@ class Curve2D extends Curve {
 				lastPoint = P;
 			}
 		}
-		pop();
+		plot2d.surface.pop();
+	}
+
+}
+
+
+class Label {
+
+	/*
+	A text label for use in Plots. Typically the user does not interact with this class.
+
+	@param {string} text: the text to display as a label
+	@param {number} x: Proportion of the pixel width of the center of the label, 0 <= x <= 1
+	@param {number} y: Proportion of the pixel height of the center of the label, 0 <= y <= 1
+	@param {int} size: The text size to use for the label
+	@param {p5 color object} textColor: The color to use for the label text
+	@param {string} orientation: The orientation of the label, can be either "horizontal" or "vertical"
+	*/
+	constructor(text, x=0.5, y=0.2, size=10, textColor=color(0, 0, 0), orientation="horizontal") {
+		this.setText(text);
+		this.setPosition(x, y);
+		this.setSize(size);
+		this.setTextColor(textColor);
+		this.setOrientation(orientation);
+	}
+
+	getText() {
+		return this.text;
+	}
+
+	/* returns [x, y] */
+	getPosition() {
+		return [this.getX(), this.getY()];
+	}
+
+	getX() {
+		return this.x;
+	}
+
+	getY() {
+		return this.y;
+	}
+
+	getSize() {
+		return this.size;
+	}
+
+	getTextColor() {
+		return this.textColor;
+	}
+
+	getOrientation() {
+		return this.orientation;
+	}
+
+	setPosition(x, y) {
+		if (!(0 <= x && x <= 1 && 0 <= y && y <= 1)) throw new Error("x and y must be 0 <= x, y <= 1.");
+		this.x = x;
+		this.y = y;
+	}
+
+	setText(text) {
+		this.text = text;
+	}
+
+	setSize(size) {
+		this.size = size;
+	}
+
+	setTextColor(textColor) {
+		this.textColor = textColor;
+	}
+
+	setOrientation(orientation) {
+		this.orientation = orientation;
+	}
+
+	/*
+	Draw the label to a plot's surface
+	@param {Plot} plot: The plot on which to draw the label
+	*/
+	draw(plot) {
+		if (this.getText() === null) return; // don't draw the label
+
+		plot.surface.push();
+		plot.surface.noStroke();
+		plot.surface.fill(this.getTextColor());
+		plot.surface.textSize(this.getSize());
+		plot.surface.translate(this.getX() * plot.getPixelWidth(), this.getY() * plot.getPixelHeight());
+
+		if (this.getOrientation() === "vertical") plot.surface.rotate(-HALF_PI);
+		plot.surface.text(this.getText(), -plot.surface.textWidth(this.getText())/2, this.getSize()/2);
+		plot.surface.pop();
 	}
 
 }

@@ -362,7 +362,7 @@ const drawInfo = (paddingX=20, paddingY=20) => {
 
 
 function handlePlots() {
-	const xData = linearSpace(-1, PI, 25);
+	const xData = linearSpace(-PI*0.5, 1.5*PI, 55);
 	curve1.setData(xData, xData.map(e => sin(e + frameCount / 20)));
 	curve2.setData(xData, xData.map(e => cos(e + frameCount / 30)));
 	plotWindow.draw();
@@ -458,10 +458,18 @@ function setup() {
 	/* Physical quantity plots */
 	plotWindow = new PlotWindow(0, 0, 1, 1, 1, 2);
 	plotWindow.setMargins(0, 5, 5, 5, 5);
+	plotWindow.setVerticalPadding(5);
 	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0);
 	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1);
 	plot1.setAutoFit(true);
 	plot2.setAutoFit(true);
+	plot1.setTitleLabel("KE vs. Time", color(0, 0, 0), 20);
+	plot1.setXAxisLabel("Time (s)", color(0, 0, 0), 15);
+	plot1.setYAxisLabel("Kinetic Energy (J)", color(0, 0, 0), 15);
+	plot2.setTitleLabel("PE vs. Time", color(0, 0, 0), 20);
+	plot2.setXAxisLabel("Time (s)", color(0, 0, 0), 15);
+	plot2.setYAxisLabel("Potential Energy (J)", color(0, 0, 0), 15);
+	// add a Plot.configure({config1: config1, config2: config2}) method. do it, just do it. just do it. do it.
 
 	curve1 = plot1.plot(new Curve2D([-1, 1], [-1, 1]));
 	curve2 = plot2.plot(new Curve2D([-1, 1], [-1, 1]));
