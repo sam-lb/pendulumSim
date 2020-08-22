@@ -363,8 +363,8 @@ const drawInfo = (paddingX=20, paddingY=20) => {
 
 function handlePlots() {
 	const xData = linearSpace(-PI*0.5, 1.5*PI, 55);
-	curve1.setData(xData, xData.map(e => sin(e + frameCount / 20)));
-	curve2.setData(xData, xData.map(e => cos(e + frameCount / 30)));
+	curve1.setData(plot1, xData, xData.map(e => sin(e + frameCount / 20)));
+	curve2.setData(plot2, xData, xData.map(e => cos(e + frameCount / 30)));
 	plotWindow.draw();
 }
 
@@ -459,7 +459,7 @@ function setup() {
 	plotWindow = new PlotWindow(0, 0, 1, 1, 1, 2);
 	plotWindow.setMargins(0, 5, 5, 5, 5);
 	plotWindow.setVerticalPadding(5);
-	
+
 	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0).configure({
 		autoFit: true,
 	}).configureLabels({
@@ -468,7 +468,7 @@ function setup() {
 		yAxis: new Label("Kinetic Energy (J)", 0.05, 0.5, 15, color(0, 0, 0), "vertical"),
 	});
 	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1).configure({
-		autoFit: true,
+		autoFit: false,
 	}).configureLabels({
 		titleLabel: new Label("PE vs. Time", 0.5, 0.1, 20, color(0, 0, 0)),
 		xAxis: new Label("Time (s)", 0.3, 0.9, 15, color(0, 0, 0)),

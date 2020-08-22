@@ -1014,6 +1014,7 @@ class Plot2D extends Plot {
 	}
 
 	updateState() {
+		if (this.getAutoFit()) this.scaleToFitAllData();
 		this.surface.background(this.getBackgroundColor());
 		if (this.getAxesEnabled()) this.drawAxes();
 
@@ -1023,11 +1024,6 @@ class Plot2D extends Plot {
 		this.drawLabels();
 		// draw labels, plot, everything here.
 		// basically call the curves' drawing functions
-	}
-
-	update() {
-		if (this.getAutoFit()) this.scaleToFitAllData();
-		super.update();
 	}
 
 }
@@ -1063,7 +1059,7 @@ class Curve2D extends Curve {
 	constructor(xData, yData, curveColor=color(255, 100, 100), curveWeight=1, dataStyle="continuous") {
 		super();
 		this.curveStyle = {};
-		this.setData(xData, yData);
+		this.setData(null, xData, yData);
 		this.setCurveColor(curveColor);
 		this.setCurveWeight(curveWeight);
 		this.setDataStyle(dataStyle);
@@ -1141,7 +1137,7 @@ class Curve2D extends Curve {
 		this.setYMax(yMax);
 	}
 
-	setData(xData, yData) {
+	setData(plot, xData, yData) {
 		if (xData.length !== yData.length) throw new Error("xData and yData must be the same length.");
 
 		this.data = [];
@@ -1157,6 +1153,7 @@ class Curve2D extends Curve {
 			this.data.push(createVector(x, y));
 		}
 		this.setExtremes(xMin, xMax, yMin, yMax);
+		if (plot !== null) plot.needsUpdate = true;
 	}
 
 	/*
