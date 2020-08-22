@@ -550,8 +550,6 @@ class Plot2D extends Plot {
 	/*
 	The base class for all types of 2D Plots.
 
-	@param {float} originX: The origin's pixel x coordinate as a proportion (in the interval [0, 1]) of the total width
-	@param {float} originY: The origin's pixel y coordinate as a proportion (in the interval [0, 1]) of the total height
 	@param {number} minX: lower bound of x to show on the Plot. Must be less than maxX
 	@param {number} maxX: upper bound of x to show on the Plot. Must be greater than minX
 	@param {number} minY: lower bound of y to show on the Plot. Must be less than maxY
@@ -579,7 +577,7 @@ class Plot2D extends Plot {
 	@param {string} projectionMode: The type of coordinate projection to use. Can be "rectangular" or "polar".
 	@param {bool} autoFit: Fit data every iteration, should be true if the Plot is continually updated with new data.
 	*/
-	constructor(originX=0.5, originY=0.5, minX=-1, maxX=1, minY=-1, maxY=1,
+	constructor(minX=-1, maxX=1, minY=-1, maxY=1,
 		xAxisColor=color(0, 0, 0), yAxisColor=color(0, 0, 0), axesEnabled=true, ticksEnabled=true, lineNumbersEnabled=true,
 		gridLinesEnabled=false, xLabel=null, xLabelColor=color(0, 0, 0), xLabelSize=10, yLabel=null, yLabelColor=color(0, 0, 0),
 		yLabelSize=10, titleLabel=null, titleLabelColor=color(0, 0, 0), titleLabelSize=20, backgroundColor=color(255, 255, 255),
@@ -605,26 +603,17 @@ class Plot2D extends Plot {
 		this.setProjectionMode(projectionMode);
 		this.setAutoFit(autoFit);
 
-		this.setOrigin(originX, originY);
 		this.calculateBounds(minX, maxX, minY, maxY);
 
 		// calculate the origin's pixel position based on the bounds, you idiot. it can't be explicitly set.
 	}
 
-	getOriginX() {
-		return this.config.general.originX;
-	}
-
-	getOriginY() {
-		return this.config.general.originY;
-	}
-
 	getOriginPixelX() {
-		return this.config.general.originPixelX;
+		return -this.getXMin() * this.getXScale();
 	}
 
 	getOriginPixelY() {
-		return this.config.general.originPixelY;
+		return this.getPixelHeight()+this.getYMin() * this.getYScale();
 	}
 
 	getXMin() {
@@ -736,21 +725,7 @@ class Plot2D extends Plot {
 
 	onDimensionSet() {
 		this.hasDimensionsSet = true;
-		this.setOrigin(this.getOriginX(), this.getOriginY());
 		this.calculateBounds(this.getXMin(), this.getXMax(), this.getYMin(), this.getYMax());
-	}
-
-	setOrigin(originX, originY) {
-		if (!(0 <= originX && originX <= 1 && 0 <= originY && originY <= 1)) throw new Error("Origin proportions must be on the interval [0, 1].");
-		this.config.general.originX = originX;
-		this.config.general.originY = originY;
-
-		if (this.hasDimensionsSet) {
-			this.config.general.originPixelX = this.getOriginX() * this.getPixelWidth();
-			this.config.general.originPixelY = this.getOriginY() * this.getPixelHeight();
-		}
-
-		this.needsUpdate = true;
 	}
 
 	/* There is no way to set the x or y bounds individually. */
@@ -933,7 +908,7 @@ class Plot2D extends Plot {
 
 	/* Resize the Plot's x bounds to fit a curve */
 	scaleXToFitCurve(curve) {
-		const xMin = curve.getMinX(), xMax = curve.getMaxX();
+		const xMin = curve.getXMin(), xMax = curve.getXMax();
 		if (xMin !== xMax) {
 			this.calculateBounds(xMin * 1.1, xMax * 1.1, this.getYMin(), this.getYMax());
 		}
@@ -942,7 +917,7 @@ class Plot2D extends Plot {
 
 	/* Resize the Plot's y bounds to fit a curve */
 	scaleYToFitCurve(curve) {
-		const yMin = curve.getMinY(), yMax = curve.getMaxY();
+		const yMin = curve.getYMin(), yMax = curve.getYMax();
 		if (yMin !== yMax) {
 			this.calculateBounds(this.getXMin(), this.getXMax(), yMin * 1.1, yMax * 1.1);
 		}
@@ -996,9 +971,7 @@ class Plot2D extends Plot {
 	}
 
 	update() {
-		if (this.getAutoFit()) {
-			this.scaleToFitAllData();
-		}
+		if (this.getAutoFit()) this.scaleToFitAllData();
 		super.update();
 	}
 
@@ -1009,15 +982,6 @@ class Plot3D extends Plot {
 
 	/*
 	The base class for all types of 3D plots.
-	*/
-
-}
-
-
-class ContinuousUpdatePlot2D extends Plot2D {
-
-	/*
-	DataPlot2D that constantly drops data off the back and takes new data at the front, retaining a certain number of data points
 	*/
 
 }

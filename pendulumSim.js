@@ -362,7 +362,7 @@ const drawInfo = (paddingX=20, paddingY=20) => {
 
 
 function handlePlots() {
-	const xData = linearSpace(-PI, PI, 25);
+	const xData = linearSpace(-1, PI, 25);
 	curve1.setData(xData, xData.map(e => sin(e + frameCount / 20)));
 	curve2.setData(xData, xData.map(e => cos(e + frameCount / 30)));
 	plotWindow.draw();
