@@ -459,17 +459,21 @@ function setup() {
 	plotWindow = new PlotWindow(0, 0, 1, 1, 1, 2);
 	plotWindow.setMargins(0, 5, 5, 5, 5);
 	plotWindow.setVerticalPadding(5);
-	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0);
-	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1);
-	plot1.setAutoFit(true);
-	plot2.setAutoFit(true);
-	plot1.setTitleLabel("KE vs. Time", color(0, 0, 0), 20);
-	plot1.setXAxisLabel("Time (s)", color(0, 0, 0), 15);
-	plot1.setYAxisLabel("Kinetic Energy (J)", color(0, 0, 0), 15);
-	plot2.setTitleLabel("PE vs. Time", color(0, 0, 0), 20);
-	plot2.setXAxisLabel("Time (s)", color(0, 0, 0), 15);
-	plot2.setYAxisLabel("Potential Energy (J)", color(0, 0, 0), 15);
-	// add a Plot.configure({config1: config1, config2: config2}) method. do it, just do it. just do it. do it.
+	
+	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0).configure({
+		autoFit: true,
+	}).configureLabels({
+		titleLabel: new Label("KE vs. Time", 0.5, 0.1, 20, color(0, 0, 0)),
+		xAxis: new Label("Time (s)", 0.3, 0.9, 15, color(0, 0, 0)),
+		yAxis: new Label("Kinetic Energy (J)", 0.05, 0.5, 15, color(0, 0, 0), "vertical"),
+	});
+	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1).configure({
+		autoFit: true,
+	}).configureLabels({
+		titleLabel: new Label("PE vs. Time", 0.5, 0.1, 20, color(0, 0, 0)),
+		xAxis: new Label("Time (s)", 0.3, 0.9, 15, color(0, 0, 0)),
+		yAxis: new Label("Potential Energy (J)", 0.05, 0.5, 15, color(0, 0, 0), "vertical"),
+	});
 
 	curve1 = plot1.plot(new Curve2D([-1, 1], [-1, 1]));
 	curve2 = plot2.plot(new Curve2D([-1, 1], [-1, 1]));

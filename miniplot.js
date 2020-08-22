@@ -517,6 +517,46 @@ class Plot {
 	}
 
 	/*
+	Configure settings by passing in an object containing settings and their values
+	@param {JS object} config: An object containing settings for the Plot. Make sure these are valid, as they are not checked
+							   the same way an explicit set would check them.
+	@returns {Plot or subclass}: The instance of Plot that this method is called from
+	*/
+	configure(config) {
+		const keys = Object.keys(this.config.general);
+		for (let key of Object.keys(config)) {
+			if (!keys.includes(key)) throw new Error("Plot has no configurable attribute " + key);
+			this.config.general[key] = config[key];
+		}
+		return this;
+	}
+
+	/*
+	Configure style by passing in an object containing style attributes and their values
+	@param {JS object} style: An object containing style attributes for the Plot. Make sure these are valid, as they are not
+							  checked the same way an explicit set would check them. Format: {styleAttributeName: styleAttributeValue}
+	@returns {Plot or subclass}: The instance of Plot that this method is called from
+	*/
+	configureStyle(style) {
+		const keys = Object.keys(this.config.style);
+		for (let key of Object.keyys(style)) {
+			if (!keys.includes(key)) throw new Error("Plot style has no configurable attribute " + key);
+			this.config.style[key] = config[key];
+		}
+		return this;
+	}
+
+	/*
+	Set the labels
+	@param {JS object} labels: contains Label objects
+	@returns {Plot}: the plot that this method was called from
+	*/
+	configureLabels(labels) {
+		this.labels = labels;
+		return this;
+	}
+
+	/*
 	Draw a line to the Plot's surface. Does not handle styling.
 	@param {p5.Vector} A: The starting point of the line
 	@param {p5.Vector} B: the ending point of the line
