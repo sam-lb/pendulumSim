@@ -362,9 +362,11 @@ const drawInfo = (paddingX=20, paddingY=20) => {
 
 
 function handlePlots() {
-	const xData = linearSpace(-PI*0.5, 1.5*PI, 55);
-	curve1.setData(plot1, xData, xData.map(e => sin(e + frameCount / 20)));
-	curve2.setData(plot2, xData, xData.map(e => cos(e + frameCount / 30)));
+	//const xData = linearSpace(-PI*0.5, 1.5*PI, 55);
+	//curve1.setData(plot1, xData, xData.map(e => sin(e + frameCount / 20)));
+	//curve2.setData(plot2, xData, xData.map(e => cos(e + frameCount / 30)));
+	//curve1.addData(plot1, pendulum.getKineticEnergy()/300000, pendulum.getPotentialEnergy()/300000);
+	//curve2.addData(plot1, simTime, pendulum.getPotentialEnergy());
 	plotWindow.draw();
 }
 
@@ -461,25 +463,25 @@ function setup() {
 	plotWindow.setVerticalPadding(5);
 
 	plot1 = plotWindow.setPlot(new Plot2D(), 0, 0).configure({
-		autoFit: true,
+		autoFit: false,
 	}).configureLabels({
-		titleLabel: new Label("KE vs. Time", 0.5, 0.1, 20, color(0, 0, 0)),
+		titleLabel: new Label("KE vs Time", 0.5, 0.1, 20, color(0, 0, 0)),
 		xAxis: new Label("Time (s)", 0.3, 0.9, 15, color(0, 0, 0)),
 		yAxis: new Label("Kinetic Energy (J)", 0.05, 0.5, 15, color(0, 0, 0), "vertical"),
 	});
+	plot1.calculateBounds(-0.5, 1.5, -0.5, 1.5);
+
 	plot2 = plotWindow.setPlot(new Plot2D(), 0, 1).configure({
-		autoFit: false,
+		autoFit: true,
 	}).configureLabels({
-		titleLabel: new Label("PE vs. Time", 0.5, 0.1, 20, color(0, 0, 0)),
+		titleLabel: new Label("PE vs Time", 0.5, 0.1, 20, color(0, 0, 0)),
 		xAxis: new Label("Time (s)", 0.3, 0.9, 15, color(0, 0, 0)),
 		yAxis: new Label("Potential Energy (J)", 0.05, 0.5, 15, color(0, 0, 0), "vertical"),
 	});
 
-	curve1 = plot1.plot(new Curve2D([-1, 1], [-1, 1]));
-	curve2 = plot2.plot(new Curve2D([-1, 1], [-1, 1]));
+	curve1 = plot1.plot(new ContinuousUpdateCurve2D(50));
+	curve2 = plot1.plot(new ContinuousUpdateCurve2D(50));
 	curve2.setCurveColor(color(0, 0, 255));
-	curve2.setPointColor(color(255, 255, 255));
-	curve2.setDataStyle("both");
 	curve1.setCurveWeight(3);
 	curve2.setCurveWeight(3);
 	/* end */

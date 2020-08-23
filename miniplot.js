@@ -1031,7 +1031,8 @@ class Plot2D extends Plot {
 	}
 
 	updateState() {
-		if (this.getAutoFit()) this.scaleToFitAllData();
+		//console.log(this.getBounds());
+		if (this.getAutoFit()) this.scaleToFitAllData(1, 1);
 		this.surface.background(this.getBackgroundColor());
 		if (this.getAxesEnabled()) this.drawAxes();
 
@@ -1168,6 +1169,8 @@ class Curve2D extends Curve {
 
 		this.data = [];
 		let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity, x, y;
+		if (xData.length === 0) { xMin = -1; xMax = 1; yMin = -1; yMax = 1; }
+
 		for (let i=0; i<xData.length; i++) {
 			x = xData[i];
 			y = yData[i];
@@ -1178,6 +1181,7 @@ class Curve2D extends Curve {
 
 			this.data.push(createVector(x, y));
 		}
+
 		this.setExtremes(xMin, xMax, yMin, yMax);
 		if (plot !== null) plot.needsUpdate = true;
 	}
@@ -1188,7 +1192,6 @@ class Curve2D extends Curve {
 	*/
 	draw(plot2d) {
 		// it has to be done this way to make sure the points are drawn on top.
-
 		const data = this.getData();
 		let PBefore, P, PAfter;
 
@@ -1215,6 +1218,50 @@ class Curve2D extends Curve {
 		}
 		plot2d.surface.pop();
 	}
+
+}
+
+
+class ContinuousUpdateCurve2D extends Curve2D {
+
+	/*
+	A Curve2D that is continually updated with new data, dropping data off the end to maintain a certain number of data points
+	The containing Plot should be set to autoFit: true.
+	@param {int} numDataPoints: the number of data points to maintain.
+	*/
+
+	constructor(numDataPoints=100, curveColor=color(255, 100, 100), pointColor=color(255, 100, 100), curveWeight=1, dataStyle="continuous") {
+		super([], [], curveColor, pointColor, curveWeight, dataStyle);
+		this.setNumDataPoints(numDataPoints);
+	}
+
+	getNumDataPoints() {
+		return this.numDataPoints;
+	}
+
+	setNumDataPoints(numDataPoints) {
+		this.numDataPoints = numDataPoints;
+	}
+
+	/* Add the new data point to the back and drop a point from the front */
+	addData(plot, x, y) {
+		const data = this.getData();
+		let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+
+		// determine new mins/maxes. there's probably a more clever way to do this,
+		// that only involves looking at the removed and the new
+		if (data.length >= this.getNumDataPoints()) data.shift();
+		data.push(createVector(x, y));
+		for (let v of data) {
+			if (v.x < xMin) xMin = v.x;
+			if (v.x > xMax) xMax = v.x;
+			if (v.y < yMin) yMin = v.y;
+			if (v.y > yMax) yMax = v.y;
+		}
+		//console.log(xMin, xMax, yMin, yMax);
+		this.setExtremes(xMin, xMax, yMin, yMax);
+		plot.needsUpdate = true;
+	};
 
 }
 
