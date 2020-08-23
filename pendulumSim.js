@@ -478,6 +478,8 @@ function setup() {
 	curve1 = plot1.plot(new Curve2D([-1, 1], [-1, 1]));
 	curve2 = plot2.plot(new Curve2D([-1, 1], [-1, 1]));
 	curve2.setCurveColor(color(0, 0, 255));
+	curve2.setPointColor(color(255, 255, 255));
+	curve2.setDataStyle("both");
 	curve1.setCurveWeight(3);
 	curve2.setCurveWeight(3);
 	/* end */

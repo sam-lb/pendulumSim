@@ -567,6 +567,18 @@ class Plot {
 		this.surface.line(A.x, A.y, B.x, B.y);
 	}
 
+	/*
+	Draw a circle to the Plot's surface. Does not handle styling. The
+	circle will always appear circlar and its size depends on the width of the Plot,
+	regardless of bounds.
+	@param {p5.Vector} pos: The center of the circle
+	@param {number} radius: The circle's radius as a proportion of the Plot's width
+	*/
+	drawCircle(pos, radius) {
+		pos = this.coordinateTransform(pos);
+		this.surface.circle(pos.x, pos.y, 2 * this.getPixelWidth() * radius);
+	}
+
 	/* update and draw the plot. to be overridden by subclasses */
 	updateState() {
 		this.surface.background(this.getBackgroundColor());
@@ -971,6 +983,11 @@ class Plot2D extends Plot {
 		this.scaleYToFitCurve(curve);
 	}
 
+	/* Check if the point P is in the view of the Plot's bounds */
+	inView(P) {
+		return (this.getXMin() <= P.x && P.x <= this.getXMax() && this.getYMin() <= P.y <= this.getYMax());
+	}
+
 	/* Clear all Curves from the Plot */
 	clear() {
 		this.curveArray = [];
@@ -1056,11 +1073,12 @@ class Curve2D extends Curve {
 	MUST HAVE:
 	- method: getMinX(), getMaxX(), getMinY(), getMaxY()
 	*/
-	constructor(xData, yData, curveColor=color(255, 100, 100), curveWeight=1, dataStyle="continuous") {
+	constructor(xData, yData, curveColor=color(255, 100, 100), pointColor=color(255, 100, 100), curveWeight=1, dataStyle="continuous") {
 		super();
 		this.curveStyle = {};
 		this.setData(null, xData, yData);
 		this.setCurveColor(curveColor);
+		this.setPointColor(pointColor);
 		this.setCurveWeight(curveWeight);
 		this.setDataStyle(dataStyle);
 	}
@@ -1093,12 +1111,20 @@ class Curve2D extends Curve {
 		return this.curveStyle.curveColor;
 	}
 
+	getPointColor() {
+		return this.curveStyle.pointColor;
+	}
+
 	getCurveWeight() {
 		return this.curveStyle.curveWeight;
 	}
 
 	setCurveColor(curveColor) {
 		this.curveStyle.curveColor = curveColor;
+	}
+
+	setPointColor(pointColor) {
+		this.curveStyle.pointColor = pointColor;
 	}
 
 	setCurveWeight(curveWeight) {
@@ -1161,20 +1187,30 @@ class Curve2D extends Curve {
 	@param {Plot2D or subclass} plot2d: The target Plot
 	*/
 	draw(plot2d) {
+		// it has to be done this way to make sure the points are drawn on top.
+
 		const data = this.getData();
-		let lastPoint = null, P;
+		let PBefore, P, PAfter;
 
 		plot2d.surface.push();
 		plot2d.surface.stroke(this.getCurveColor());
 		plot2d.surface.strokeWeight(this.getCurveWeight());
-		for (let i=0; i<data.length; i++) {
+		plot2d.surface.fill(this.getPointColor());
+
+		for (let i=1; i<data.length-1; i+=2) {
+			PBefore = data[i-1];
 			P = data[i];
-			if (this.getDataStyle() !== "continuous") { // discrete or both
-				// draw a point here, but do this later
-			}
-			if (this.getDataStyle() !== "discrete") { // continuous or both
-				if (lastPoint !== null) plot2d.drawLine(lastPoint, P);
-				lastPoint = P;
+			PAfter = data[i+1];
+			if (plot2d.inView(PBefore) || plot2d.inView(P) || plot2d.inView(PAfter)) {
+				if (this.getDataStyle() !== "discrete") { // continuous or both
+					plot2d.drawLine(PBefore, P);
+					plot2d.drawLine(P, PAfter);
+				}
+				if (this.getDataStyle() !== "continuous") { // discrete or both
+					plot2d.surface.strokeWeight(1);
+					plot2d.drawCircle(P, 0.015);
+					plot2d.surface.strokeWeight(this.getCurveWeight());
+				}
 			}
 		}
 		plot2d.surface.pop();
